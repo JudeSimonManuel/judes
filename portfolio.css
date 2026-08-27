@@ -287,7 +287,6 @@ h1 {
 .tags a{
     font-size: 0.8rem;
     padding: 5px 10px;
-    border: 1px solid var(--secondary);
     color: var(--secondary);
     border-radius: 20px;
     margin-right: 5px;
