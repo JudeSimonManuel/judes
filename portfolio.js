@@ -1,22 +1,15 @@
 /* ==========================================================================
-   JUDE SIMON MANUEL — INTERACTIVE ARTISTIC ENGINE (v2 - Fixed Sticky Scroll)
-   Features:
-   1. Smooth Lerped Custom Cursor & Hover Expansion
-   2. Magnetic Navigation & Action Buttons
-   3. Staggered IntersectionObserver Scroll Reveals & Skill Bars
-   4. Exact 1:1 Sticky Horizontal Scroll Calculation & Clamping
-   5. Subtle 3D Perspective Card Tilt
-   ========================================================================== */
+ * JUDE SIMON MANUEL — COMPLETE INTERACTIVE ENGINE (3D CARD SWAP EDITION)
+ * ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
     const cursorDot = document.querySelector('.cursor-dot');
     const cursorRing = document.querySelector('.cursor-ring');
     const progressBar = document.querySelector('.progress-bar');
-    const horizontalWrapper = document.querySelector('#projects-wrapper');
     const horizontalTrack = document.querySelector('#track');
 
     // ----------------------------------------------------------------------
-    // 1. SMOOTH CUSTOM CURSOR WITH SPRING INERTIA
+    // 1. SMOOTH CUSTOM CURSOR
     // ----------------------------------------------------------------------
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
@@ -26,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
-
         if (cursorDot) {
             cursorDot.style.left = `${mouseX}px`;
             cursorDot.style.top = `${mouseY}px`;
@@ -36,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function animateCursor() {
         ringX += (mouseX - ringX) * 0.18;
         ringY += (mouseY - ringY) * 0.18;
-
         if (cursorRing) {
             cursorRing.style.left = `${ringX}px`;
             cursorRing.style.top = `${ringY}px`;
@@ -52,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------------------------
-    // 2. MAGNETIC BUTTON MICRO-INTERACTION
+    // 2. MAGNETIC BUTTONS
     // ----------------------------------------------------------------------
     const magneticEls = document.querySelectorAll('.magnetic');
     magneticEls.forEach((el) => {
@@ -62,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = e.clientY - rect.top - rect.height / 2;
             el.style.transform = `translate(${x * 0.22}px, ${y * 0.22}px)`;
         });
-
         el.addEventListener('mouseleave', () => {
             el.style.transform = 'translate(0px, 0px)';
         });
@@ -83,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------------------------
-    // 4. INTERSECTION OBSERVER FOR REVEALS & SKILL BARS
+    // 4. SCROLL REVEALS & SKILL BARS
     // ----------------------------------------------------------------------
     const revealEls = document.querySelectorAll('.reveal-up, .skill-card');
     const revealObserver = new IntersectionObserver(
@@ -94,86 +84,158 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         },
-        { threshold: 0.15 }
+        { threshold: 0.12 }
     );
-
     revealEls.forEach((el) => revealObserver.observe(el));
 
     // ----------------------------------------------------------------------
-    // 5. EXACT STICKY HORIZONTAL SCROLL ENGINE
+    // 5. TOP PROGRESS BAR & 3D CARD SWAP STACK
     // ----------------------------------------------------------------------
-    let currentTrackX = 0;
-    let targetTrackX = 0;
-    let maxTranslate = 0;
-
-    function syncHorizontalDimensions() {
-        if (!horizontalWrapper || !horizontalTrack) return;
-
-        if (window.innerWidth > 960) {
-            // Calculate exact horizontal overflow distance so every card scrolls fully into view
-            const trackWidth = horizontalTrack.scrollWidth;
-            const viewportWidth = window.innerWidth;
-            maxTranslate = Math.max(0, trackWidth - viewportWidth + 60);
-
-            // Set wrapper vertical height = 100vh + exact horizontal scroll distance
-            horizontalWrapper.style.height = `${window.innerHeight + maxTranslate}px`;
-        } else {
-            horizontalWrapper.style.height = 'auto';
-            maxTranslate = 0;
-            targetTrackX = 0;
-            currentTrackX = 0;
-            horizontalTrack.style.transform = 'none';
-        }
-    }
-
     function updateScroll() {
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-
-        if (progressBar) {
-            progressBar.style.width = `${scrollPercent}%`;
-        }
-
-        if (horizontalWrapper && horizontalTrack && window.innerWidth > 960) {
-            const wrapperRect = horizontalWrapper.getBoundingClientRect();
-            const scrollableDistance = horizontalWrapper.offsetHeight - window.innerHeight;
-
-            if (scrollableDistance > 0) {
-                // Clamp progress strictly between 0 and 1 so it never stops early
-                const rawProgress = -wrapperRect.top / scrollableDistance;
-                const clampedProgress = Math.min(1, Math.max(0, rawProgress));
-                targetTrackX = -clampedProgress * maxTranslate;
-            }
+        if (progressBar && docHeight > 0) {
+            progressBar.style.width = `${(scrollTop / docHeight) * 100}%`;
         }
     }
-
-    function smoothHorizontalLoop() {
-        if (horizontalTrack && window.innerWidth > 960) {
-            currentTrackX += (targetTrackX - currentTrackX) * 0.12;
-            horizontalTrack.style.transform = `translate3d(${currentTrackX.toFixed(2)}px, 0, 0)`;
-        }
-        requestAnimationFrame(smoothHorizontalLoop);
-    }
-
-    window.addEventListener('resize', () => {
-        syncHorizontalDimensions();
-        updateScroll();
-    });
-    window.addEventListener('load', () => {
-        syncHorizontalDimensions();
-        updateScroll();
-    });
-
-    syncHorizontalDimensions();
     window.addEventListener('scroll', updateScroll, { passive: true });
     updateScroll();
-    smoothHorizontalLoop();
+
+    if (horizontalTrack) {
+        let cards = Array.from(horizontalTrack.querySelectorAll('.project-card'));
+        // Ensure tilt-card class doesn't interfere with 3D stack transforms
+        cards.forEach((c) => c.classList.remove('tilt-card'));
+
+        let isAnimating = false;
+        let autoSwapTimer = null;
+
+        function getStackCoords(i) {
+            return {
+                x: i * 18,
+                y: i * -20,
+                z: i * -55,
+                rot: i * 3,
+                scale: 1 - i * 0.05,
+                opacity: i > 3 ? 0 : 1 - i * 0.16
+            };
+        }
+
+        function layoutStack() {
+            cards.forEach((card, i) => {
+                const s = getStackCoords(i);
+                card.style.transition = 'transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s ease';
+                card.style.zIndex = String(cards.length - i);
+                card.style.transform = `translate3d(${s.x}px, ${s.y}px, ${s.z}px) rotateZ(${s.rot}deg) scale(${s.scale})`;
+                card.style.opacity = String(s.opacity);
+                card.style.pointerEvents = i === 0 ? 'auto' : 'none';
+            });
+        }
+
+        function swapFrontToBack(flingX = 0, flingY = 0) {
+            if (isAnimating || cards.length < 2) return;
+            isAnimating = true;
+
+            const frontCard = cards[0];
+            const backSlot = getStackCoords(cards.length - 1);
+            const dir = flingX < -15 ? -1 : 1;
+
+            const peakX = flingX !== 0
+            ? flingX + dir * Math.max(90, 140 - Math.abs(flingX) * 0.3)
+            : 140;
+            const peakY = flingY !== 0
+            ? Math.min(flingY - 50, -80)
+            : -110;
+            const startRot = flingX * 0.06;
+
+            // Advance remaining cards forward one slot
+            cards.slice(1).forEach((card, idx) => {
+                const s = getStackCoords(idx);
+                card.style.transition = 'transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s ease';
+                card.style.zIndex = String(cards.length - idx);
+                card.style.transform = `translate3d(${s.x}px, ${s.y}px, ${s.z}px) rotateZ(${s.rot}deg) scale(${s.scale})`;
+                card.style.opacity = String(s.opacity);
+            });
+
+            // Stage 1: Throw outward from exact release point
+            frontCard.style.transition = 'transform 0.26s cubic-bezier(0.2, 0.8, 0.4, 1), opacity 0.26s ease';
+            frontCard.style.transform = `translate3d(${peakX}px, ${peakY}px, 40px) rotateZ(${dir * 14}deg) scale(0.95)`;
+            frontCard.style.opacity = '0.85';
+
+            // Stage 2: Tuck behind the stack into back slot
+            setTimeout(() => {
+                frontCard.style.zIndex = '1';
+                frontCard.style.transition = 'transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.38s ease';
+                frontCard.style.transform = `translate3d(${backSlot.x}px, ${backSlot.y}px, ${backSlot.z}px) rotateZ(${backSlot.rot}deg) scale(${backSlot.scale})`;
+                frontCard.style.opacity = String(backSlot.opacity);
+            }, 250);
+
+            // Stage 3: Finalize order
+            setTimeout(() => {
+                cards.push(cards.shift());
+                layoutStack();
+                isAnimating = false;
+            }, 640);
+        }
+
+        function resetTimer() {
+            clearInterval(autoSwapTimer);
+            autoSwapTimer = setInterval(() => swapFrontToBack(0, 0), 4000);
+        }
+
+        let startX = 0, startY = 0, deltaX = 0, deltaY = 0, isDragging = false;
+
+        horizontalTrack.addEventListener('pointerdown', (e) => {
+            if (isAnimating || e.target.closest('a')) return;
+            const frontCard = cards[0];
+            if (!frontCard.contains(e.target)) return;
+
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            deltaX = 0;
+            deltaY = 0;
+            frontCard.style.transition = 'none';
+            if (frontCard.setPointerCapture) {
+                try { frontCard.setPointerCapture(e.pointerId); } catch (_) {}
+            }
+            clearInterval(autoSwapTimer);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            deltaX = e.clientX - startX;
+            deltaY = e.clientY - startY;
+            cards[0].style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) rotateZ(${deltaX * 0.06}deg)`;
+        });
+
+        function endDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+
+            const distance = Math.hypot(deltaX, deltaY);
+            if (distance > 65) {
+                swapFrontToBack(deltaX, deltaY);
+            } else if (distance < 6) {
+                swapFrontToBack(0, 0);
+            } else {
+                layoutStack();
+            }
+            resetTimer();
+        }
+
+        window.addEventListener('pointerup', endDrag);
+        window.addEventListener('pointercancel', endDrag);
+        horizontalTrack.addEventListener('mouseenter', () => clearInterval(autoSwapTimer));
+        horizontalTrack.addEventListener('mouseleave', () => { if (!isDragging) resetTimer(); });
+
+        layoutStack();
+        resetTimer();
+    }
 
     // ----------------------------------------------------------------------
-    // 6. SUBTLE 3D PERSPECTIVE TILT ON CARDS
+    // 6. SUBTLE 3D PERSPECTIVE TILT ON OTHER CARDS
     // ----------------------------------------------------------------------
-    const tiltCards = document.querySelectorAll('.tilt-card');
+    const tiltCards = document.querySelectorAll('.tilt-card:not(.project-card)');
     tiltCards.forEach((card) => {
         card.addEventListener('mousemove', (e) => {
             if (window.innerWidth <= 960) return;

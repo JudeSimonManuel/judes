@@ -652,27 +652,78 @@ body.cursor-hover .cursor-ring {
 }
 
 /* ==========================================================================
-   HORIZONTAL SCROLL PROJECTS ARCHIVE (STICKY EXHIBITION)
-   ========================================================================== */
+ *  3D CARD SWAP ARCHIVE (REACTBITS STYLE)
+ *  ========================================================================== */
 .horizontal-scroll-wrapper {
-    /* Dynamically sized by JS based on exact track width; fallback 350vh */
-    height: 350vh;
+    height: auto !important;
+    padding: 100px 5vw 140px;
     position: relative;
     z-index: 2;
 }
 
 .sticky-track-view {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-    padding: 80px 0 40px;
+    position: relative;
+    height: auto;
+    max-width: 1320px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    align-items: center;
+    gap: 60px;
+    overflow: visible;
+    padding: 0;
 }
 
+.gallery-header {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.horizontal-track {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    height: 500px;
+    margin: 0 auto;
+    padding: 0;
+    perspective: 1400px;
+    transform-style: preserve-3d;
+}
+
+.horizontal-track .project-card {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    user-select: none;
+    touch-action: pan-y;
+    transform-origin: bottom center;
+    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s ease;
+    will-change: transform, opacity;
+}
+
+.horizontal-track .project-card:active {
+    cursor: grabbing;
+}
+
+/* Front-to-back arc animation when swapped */
+
+
+@media (max-width: 960px) {
+    .sticky-track-view {
+        grid-template-columns: 1fr;
+        gap: 48px;
+    }
+    .horizontal-track {
+        height: 480px;
+        max-width: 360px;
+    }
+}
 .gallery-header {
     max-width: 1320px;
     width: 100%;
@@ -708,14 +759,7 @@ body.cursor-hover .cursor-ring {
     background: var(--bg-glass);
 }
 
-.horizontal-track {
-    display: flex;
-    gap: 36px;
-    width: max-content;
-    padding: 12px 10vw 24px 5vw;
-    will-change: transform;
-    user-select: none;
-}
+
 
 .project-card {
     width: clamp(320px, 34vw, 450px);
@@ -1095,15 +1139,6 @@ body.cursor-hover .cursor-ring {
     }
     .gallery-header {
         padding: 0;
-    }
-    .horizontal-track {
-        flex-direction: column;
-        width: 100%;
-        padding: 0;
-        transform: none !important;
-    }
-    .project-card {
-        width: 100%;
     }
     .contact-row {
         flex-direction: column;
