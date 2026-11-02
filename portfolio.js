@@ -255,4 +255,157 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
         });
     });
+    // ----------------------------------------------------------------------
+    // 7. 4-SECOND HOLD THEME SWITCHER (GRADUAL COLOR + WEB AUDIO SYNTH)
+    // ----------------------------------------------------------------------
+    const themeBtn = document.getElementById('theme-btn');
+    if (themeBtn) {
+        const btnLabel = themeBtn.querySelector('.btn-label');
+        const root = document.documentElement;
+        const HOLD_DURATION = 4000; // 4 seconds
+
+        let isDark = false;
+        let holdProgress = 0; // 0 = Light, 1 = Dark
+        let isHolding = false;
+        let rafId = null;
+        let lastTime = 0;
+
+        // Web Audio API Synthesizer (No external MP3 required)
+        let audioCtx = null, osc = null, gain = null;
+
+        function startHoldSound() {
+            try {
+                audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                osc = audioCtx.createOscillator();
+                gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(isDark ? 420 : 140, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.08, audioCtx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+            } catch (_) {}
+        }
+
+        function updateHoldSound(p) {
+            if (!osc || !audioCtx) return;
+            // Pitch rises when going dark, falls when going light
+            const freq = 140 + p * 280;
+            osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.05);
+        }
+
+        function stopHoldSound(completed) {
+            if (!audioCtx || !osc || !gain) return;
+            try {
+                const now = audioCtx.currentTime;
+                if (completed) {
+                    // Completion chime
+                    osc.frequency.setValueAtTime(isDark ? 528 : 660, now);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+                    osc.stop(now + 0.45);
+                } else {
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+                    osc.stop(now + 0.12);
+                }
+            } catch (_) {}
+            osc = null;
+            gain = null;
+        }
+
+        // Helper to interpolate between Light & Dark RGB values
+        const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+        const mixRGB = (c1, c2, t) => `rgb(${lerp(c1[0], c2[0], t)}, ${lerp(c1[1], c2[1], t)}, ${lerp(c1[2], c2[2], t)})`;
+        const mixRGBA = (c1, c2, a1, a2, t) =>
+        `rgba(${lerp(c1[0], c2[0], t)}, ${lerp(c1[1], c2[1], t)}, ${lerp(c1[2], c2[2], t)}, ${(a1 + (a2 - a1) * t).toFixed(2)})`;
+
+        function applyGradualTheme(p) {
+            // p: 0 (Light) -> 1 (Dark)
+            const fillPct = isDark ? (1 - p) : p;
+            themeBtn.style.setProperty('--hold-progress', fillPct.toFixed(3));
+
+            root.style.setProperty('--bg-primary', mixRGB([250, 246, 240], [11, 25, 31], p));
+            root.style.setProperty('--bg-secondary', mixRGB([243, 237, 226], [17, 36, 44], p));
+            root.style.setProperty('--bg-glass', mixRGBA([255, 252, 247], [17, 36, 44], 0.72, 0.80, p));
+            root.style.setProperty('--bg-card', mixRGBA([255, 253, 249], [20, 42, 52], 0.86, 0.90, p));
+
+            // Transitions from your new #15717d, #3a7ca5, #33658a to luminous light-teal in dark mode
+            root.style.setProperty('--ink-primary', mixRGB([21, 113, 125], [224, 244, 247], p));
+            root.style.setProperty('--ink-secondary', mixRGB([58, 124, 165], [156, 205, 229], p));
+            root.style.setProperty('--ink-muted', mixRGB([51, 101, 138], [108, 158, 189], p));
+
+            root.style.setProperty('--border-hairline', mixRGBA([21, 113, 125], [224, 244, 247], 0.14, 0.14, p));
+            root.style.setProperty('--border-strong', mixRGBA([21, 113, 125], [224, 244, 247], 0.28, 0.28, p));
+
+            document.body.classList.toggle('dark-mode', p > 0.5);
+        }
+
+        function tick(now) {
+            const dt = now - lastTime;
+            lastTime = now;
+
+            if (isHolding) {
+                const target = isDark ? 0 : 1;
+                const step = dt / HOLD_DURATION;
+                holdProgress = isDark
+                ? Math.max(0, holdProgress - step)
+                : Math.min(1, holdProgress + step);
+
+                applyGradualTheme(holdProgress);
+                updateHoldSound(holdProgress);
+
+                const pct = Math.round((isDark ? 1 - holdProgress : holdProgress) * 100);
+                btnLabel.textContent = `HOLDING // ${pct}%`;
+
+                if (holdProgress === target) {
+                    // 4 seconds reached -> lock in new theme!
+                    isDark = !isDark;
+                    isHolding = false;
+                    themeBtn.style.setProperty('--hold-progress', '0');
+                    btnLabel.textContent = isDark ? 'HOLD 4S // LIGHT' : 'HOLD 4S // DARK';
+                    stopHoldSound(true);
+                    return;
+                }
+                rafId = requestAnimationFrame(tick);
+            } else {
+                // Released early -> smoothly revert back to current theme
+                const revertTarget = isDark ? 1 : 0;
+                const step = (dt / 600); // Quick 0.6s snap-back
+                holdProgress = isDark
+                ? Math.min(1, holdProgress + step)
+                : Math.max(0, holdProgress - step);
+
+                applyGradualTheme(holdProgress);
+
+                if (holdProgress !== revertTarget) {
+                    rafId = requestAnimationFrame(tick);
+                } else {
+                    btnLabel.textContent = isDark ? 'HOLD 4S // LIGHT' : 'HOLD 4S // DARK';
+                }
+            }
+        }
+
+        themeBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (isHolding) return;
+            isHolding = true;
+            lastTime = performance.now();
+            cancelAnimationFrame(rafId);
+            startHoldSound();
+            rafId = requestAnimationFrame(tick);
+        });
+
+        function cancelHold() {
+            if (!isHolding) return;
+            isHolding = false;
+            lastTime = performance.now();
+            stopHoldSound(false);
+        }
+
+        window.addEventListener('pointerup', cancelHold);
+        window.addEventListener('pointercancel', cancelHold);
+        themeBtn.addEventListener('pointerleave', cancelHold);
+    }
 });
