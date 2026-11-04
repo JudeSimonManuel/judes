@@ -43,17 +43,25 @@
         <nav class="pill-nav">
             <button class="nav-btn magnetic" data-target="hero"><span>Index</span></button>
             <button class="nav-btn magnetic" data-target="about"><span>Ethos</span></button>
-            <button class="nav-btn magnetic" data-target="skills"><span>Craft</span></button>
+            <button class="nav-btn magnetic" data-target="skills"><span>Tools</span></button>
             <button class="nav-btn magnetic" data-target="projects-wrapper"><span>Archive</span></button>
             <button class="nav-btn magnetic" data-target="contact"><span>Dialogue</span></button>
         </nav>
-        <button class="theme-hold-btn magnetic" id="theme-btn" aria-label="Hold 4 seconds to switch theme">
-            <span class="btn-fill"></span>
-            <span class="btn-content">
-                <span class="pulse-dot"></span>
-                <span class="btn-label">HOLD 4S // DARK</span>
-            </span>
-        </button>
+       <div class="header-actions">
+            <button class="theme-hold-btn magnetic" id="theme-btn" aria-label="Hold 4 seconds to switch theme">
+                <span class="btn-fill"></span>
+                <span class="btn-content">
+                    <span class="pulse-dot"></span>
+                    <span class="btn-label">HOLD 4S // DARK</span>
+                </span>
+            </button>
+            <span class="hold-toast" id="hold-toast">Hold for 4s</span>
+
+            <button class="menu-toggle-btn" id="menu-toggle" aria-label="Toggle Menu">
+                <span></span>
+                <span></span>
+            </button>
+        </div>
     </header>
 
     <main>
@@ -107,7 +115,7 @@
                     <div class="editorial-card tilt-card">
                         <span class="card-index">BIOGRAPHY</span>
                         <p class="lead-paragraph">
-                            Based in the lush landscapes of <em>Kerala</em>, I bridge the gap between complex data and compelling design. As a BTech CS (DS) student, my world exists at the intersection of secure code and aesthetic interfaces.
+                            Based in the lush landscapes of <em>Kerala</em>, I bridge the gap between complex data and compelling design. As a BTech CS (Data Science) student, my world exists at the intersection of secure code and aesthetic interfaces.
                         </p>
                         <p class="body-paragraph">
                             Whether I’m exploring the vulnerabilities in a system, engineering a data-driven solution, or designing high-impact posters, I prioritize creativity and precision.
@@ -250,13 +258,13 @@
                         <div class="card-content">
                             <div class="card-meta">
                                 <span>NETWORK UTILITY</span>
-                                <span>JAVA</span>
+                                <span>PYTHON</span>
                             </div>
                             <h3>Scanet</h3>
                             <p>Introducing a robust network scanner which searches for the connected devices in the LAN and returns back their IP addresses, made completely in Java.</p>
                             <div class="card-actions">
                                 <div class="tags">
-                                    <span>Java</span>
+                                    <span>Python</span>
                                     <span>LAN Discovery</span>
                                 </div>
                                 <a href="https://github.com/JudeSimonManuel/scanet" target="_blank" rel="noopener" class="art-link magnetic">
@@ -266,7 +274,7 @@
                         </div>
                     </article>
 
-                    <!-- Project 02: Data & Security Canvas -->
+                    <!-- Project 02: File transfer solution -->
                     <article class="project-card">
                         <div class="card-canvas canvas-2">
                             <span class="canvas-index">NO. 02</span>
@@ -277,17 +285,17 @@
                         </div>
                         <div class="card-content">
                             <div class="card-meta">
-                                <span> </span>
-                                <span></span>
+                                <span>SOCKET PROGRAMMING</span>
+                                <span>JAVA</span>
                             </div>
-                            <h3></h3>
-                            <p></p>
+                            <h3>Filefly</h3>
+                            <p>Introducing a wlan file transfer app for computers.Simple,minimal ui with ultra fast file transferring.Check it out!</p>
                             <div class="card-actions">
                                 <div class="tags">
-                                    <span></span>
-                                    <span></span>
+                                    <span>Java</span>
+                                    <span>TCP networking</span>
                                 </div>
-                                <a href="https://github.com/JudeSimonManuel" target="_blank" rel="noopener" class="art-link magnetic">
+                                <a href="https://github.com/JudeSimonManuel/Filefly" target="_blank" rel="noopener" class="art-link magnetic">
                                     View GitHub <span>&nearr;</span>
                                 </a>
                             </div>

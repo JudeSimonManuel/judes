@@ -323,10 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function applyGradualTheme(p) {
             // p: 0 (Light) -> 1 (Dark)
-            const fillPct = isDark ? (1 - p) : p;
-            themeBtn.style.setProperty('--hold-progress', fillPct.toFixed(3));
+            themeBtn.style.setProperty('--hold-progress', p.toFixed(3));
 
-            root.style.setProperty('--bg-primary', mixRGB([250, 246, 240], [11, 25, 31], p));
+            root.style.setProperty('--bg-primary', mixRGB([230, 230, 206], [11, 25, 31], p));
             root.style.setProperty('--bg-secondary', mixRGB([243, 237, 226], [17, 36, 44], p));
             root.style.setProperty('--bg-glass', mixRGBA([255, 252, 247], [17, 36, 44], 0.72, 0.80, p));
             root.style.setProperty('--bg-card', mixRGBA([255, 253, 249], [20, 42, 52], 0.86, 0.90, p));
@@ -363,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 4 seconds reached -> lock in new theme!
                     isDark = !isDark;
                     isHolding = false;
-                    themeBtn.style.setProperty('--hold-progress', '0');
+
                     btnLabel.textContent = isDark ? 'HOLD 4S // LIGHT' : 'HOLD 4S // DARK';
                     stopHoldSound(true);
                     return;
@@ -407,5 +406,52 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('pointerup', cancelHold);
         window.addEventListener('pointercancel', cancelHold);
         themeBtn.addEventListener('pointerleave', cancelHold);
+    }
+    // ----------------------------------------------------------------------
+    // 8. MOBILE VERTICAL NAVBAR TOGGLE & "HOLD FOR 4S" TOAST
+    // ----------------------------------------------------------------------
+    const menuToggle = document.getElementById('menu-toggle');
+    const pillNav = document.querySelector('.pill-nav');
+    const holdToast = document.getElementById('hold-toast');
+    let pressStartTime = 0;
+    let toastTimer = null;
+
+    if (menuToggle && pillNav) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuToggle.classList.toggle('open');
+            pillNav.classList.toggle('nav-open');
+        });
+
+        // Close drawer when a nav link is clicked or user taps outside
+        pillNav.querySelectorAll('.nav-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                menuToggle.classList.remove('open');
+                pillNav.classList.remove('nav-open');
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!pillNav.contains(e.target) && !menuToggle.contains(e.target)) {
+                menuToggle.classList.remove('open');
+                pillNav.classList.remove('nav-open');
+            }
+        });
+    }
+
+    // Show "Hold for 4s" if user taps/releases the theme button too quickly
+    if (themeBtn && holdToast) {
+        themeBtn.addEventListener('pointerdown', () => {
+            pressStartTime = performance.now();
+            holdToast.classList.remove('show');
+        });
+
+        themeBtn.addEventListener('pointerup', () => {
+            if (performance.now() - pressStartTime < 3800) {
+                holdToast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => holdToast.classList.remove('show'), 2000);
+            }
+        });
     }
 });
